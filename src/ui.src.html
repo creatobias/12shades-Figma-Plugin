@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --bg:#fff; --fg:#1c1917; --mut:#78716c; --line:#e7e5e4; --sec:#f5f5f4; --acc:#0d99ff; --accfg:#fff; --hov:rgba(0,0,0,.04); --seg:#fff; --canvas:#eeedec; --tt:#1c1917; --ttf:#fff; color-scheme:light; }
+  :root[data-t=dark] { --bg:#2c2c2c; --fg:#f5f5f5; --mut:#a3a3a3; --line:#484848; --sec:#363636; --hov:rgba(255,255,255,.06); --seg:#575757; --canvas:#1f1f1f; --tt:#f5f5f5; --ttf:#1c1917; color-scheme:dark; }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--canvas); font:12px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); }
+  h1 { font-size:15px; font-weight:700; margin:0; letter-spacing:-.01em; }
+  h2 { font-size:12px; font-weight:600; margin:28px 0 12px; }
+  label { display:block; color:var(--mut); margin:0 0 5px; }
+  .val { float:right; color:var(--fg); font-variant-numeric:tabular-nums; }
+  input[type=text], select { width:100%; height:32px; padding:0 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; font:inherit; }
+  input[type=text]:focus, select:focus { outline:2px solid var(--acc); outline-offset:-1px; }
+  input[type=range] { width:100%; margin:0; accent-color:var(--acc); }
+  .grid2 { display:grid; grid-template-columns:1fr; gap:12px; }
+  .btn { height:32px; padding:0 14px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+  .btn:hover { background:var(--sec); }
+  .btn.primary { width:100%; height:40px; background:var(--acc); color:var(--accfg); border-color:var(--acc); font-weight:600; font-size:13px; border-radius:10px; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .seg { display:flex; padding:3px; gap:2px; background:var(--sec); border-radius:8px; }
+  .seg button { flex:1; height:26px; border:0; border-radius:6px; background:transparent; color:var(--mut); font:inherit; cursor:pointer; }
+  .seg.v { flex-direction:column; }
+  .seg.v button { flex:none; height:28px; }
+  .seg button[aria-pressed=true] { background:var(--seg); color:var(--fg); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.15); }
+  .app { display:grid; grid-template-rows:auto 1fr; height:100vh; background:var(--canvas); }
+  .bar { display:flex; justify-content:space-between; align-items:center; padding:14px 16px 12px; }
+  .barr { display:flex; align-items:center; gap:18px; }
+  .credit { color:var(--mut); font-size:11px; }
+  .credit a { color:inherit; text-decoration:underline; text-underline-offset:2px; }
+  .credit a:hover { color:var(--fg); }
+  .bar .seg { width:210px; }
+  .bar .seg button { height:24px; font-size:11px; }
+  .body { display:grid; grid-template-columns:200px 232px 1fr; gap:16px; padding:0 16px 16px; min-height:0; }
+  .box { background:var(--bg); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+  .list { flex:1; overflow:auto; padding:12px; }
+  .item { display:grid; grid-template-columns:1fr; user-select:none; gap:2px 10px; align-items:center; padding:12px; border-radius:10px; cursor:pointer; }
+  .item:hover { background:var(--hov); }
+  .item[aria-selected=true] { background:var(--sec); box-shadow:0 0 0 1px var(--line); }
+  .item .n { font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .item .meta { display:flex; justify-content:space-between; align-items:center; gap:6px; }
+  .tag { color:var(--mut); font-size:11px; }
+  .strip { display:flex; height:10px; border-radius:3px; overflow:hidden; margin-top:6px; }
+  .strip i { flex:1; }
+  .strip i.base { flex:2.6; }
+  .x { width:20px; height:20px; border:0; background:transparent; color:var(--mut); cursor:pointer; border-radius:5px; font-size:14px; line-height:1; padding:0; }
+  .x:hover { background:var(--sec); color:var(--fg); }
+  .empty { padding:12px; color:var(--mut); }
+  .side .foot { padding:12px; border-top:1px solid var(--line); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .side .foot .btn { white-space:nowrap; padding:0 10px; }
+  .side .foot #add { flex:1 1 100%; }
+  .side .foot #all, .side .foot #clear { flex:1; padding:0 6px; }
+  .side .foot .sep { width:1px; height:18px; background:var(--line); margin:0 2px; }
+  .side .foot #rescan { width:32px; padding:0; color:var(--mut); }
+  .col { overflow:auto; min-height:0; padding:20px 20px 0; display:flex; flex-direction:column; scrollbar-width:none; }
+  .col::-webkit-scrollbar { display:none; }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .brand .logo { color:var(--fg); display:block; }
+  .col > h2:first-child { font-size:18px; font-weight:700; letter-spacing:-.01em; margin:0 0 20px; }
+  .rows { display:flex; flex-direction:column; gap:16px; padding-bottom:20px; }
+  .prow { border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .prow .head { display:flex; gap:12px; align-items:center; margin-bottom:16px; }
+  .prow .pk { appearance:none; -webkit-appearance:none; width:40px; height:40px; padding:0; border:0; border-radius:10px; background:none; cursor:pointer; flex:none; }
+  .prow .pk::-webkit-color-swatch-wrapper { padding:0; }
+  .prow .pk::-webkit-color-swatch { border:1px solid rgba(0,0,0,.1); border-radius:10px; }
+  .prow input.nm { flex:1; min-width:0; height:40px; font-size:16px; font-weight:600; letter-spacing:-.01em; border-color:transparent; padding:0 8px; margin-left:0; }
+  .prow input.nm:hover { border-color:var(--line); }
+  .prow input.hx { width:96px; flex:none; font-family:ui-monospace, Menlo, monospace; }
+  .prow .head .tag { width:46px; text-align:right; }
+  .preview { display:flex; gap:4px; }
+  .preview div { flex:1; min-width:0; text-align:center; font-size:10px; color:var(--mut); }
+  .preview div { position:relative; cursor:pointer; }
+  .preview div.copied[data-hex]:hover::after { content:'Kopiert ✓'; }
+  .preview div[data-hex]:hover::after { content:attr(data-hex); position:absolute; left:50%; top:-30px; transform:translateX(-50%); padding:5px 9px; border-radius:7px; background:var(--tt); color:var(--ttf); font:400 12px/1 ui-monospace, Menlo, monospace; white-space:nowrap; z-index:5; pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+  .preview div[data-hex]:hover::before { content:''; position:absolute; left:50%; top:-12px; width:8px; height:8px; margin-left:-4px; background:var(--tt); transform:rotate(45deg); border-radius:1px; z-index:4; pointer-events:none; }
+  .preview .base { flex:1.6; color:var(--fg); font-weight:700; }
+  .preview .base i { position:relative; }
+  .preview .base i::after { content:''; position:absolute; left:50%; bottom:7px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.3); }
+  .preview i { display:block; height:44px; border-radius:7px; border:1px solid rgba(0,0,0,.07); margin-bottom:6px; }
+  .chk { display:flex; align-items:center; gap:8px; margin:0; color:var(--fg); cursor:pointer; }
+  .chk input { margin:0; }
+  .err { color:#dc2626; min-height:18px; margin-bottom:6px; }
+  .hint { color:var(--mut); font-size:11px; margin:12px 0 0; }
+  .grp { display:grid; gap:16px; padding:16px 0; border-top:1px solid var(--line); }
+  .grp:first-child { border-top:0; padding-top:0; }
+    .grp .hint { margin:0; }
+  .hint:empty { display:none; }
+  .grp h2 { margin:0 !important; }
+  .grp label { margin-bottom:6px; }
+  .grp .chk { margin:0; font-size:13px; }
+  .grp .chk input { width:16px; height:16px; }
+  #outwrap .grid2 { gap:16px; }
+  .col.settings input[type=text], .col.settings select { height:38px; font-size:13px; }
+  .col.settings .seg { padding:4px; gap:4px; }
+  .col.settings .seg.v button { height:36px; font-size:13px; border-radius:7px; }
+  .col.settings input[type=range] { height:22px; }
+  .col footer { position:sticky; bottom:0; background:var(--bg); margin-top:auto; padding:12px 0 20px; }
+  .link { border:0; background:none; color:var(--acc); font:inherit; cursor:pointer; padding:0; }
+  .link:hover { text-decoration:underline; }
+  .ttl { display:flex; flex-direction:column; gap:4px; margin:0 0 16px; }
+  .acts { display:flex; gap:16px; }
+  .link[hidden] { display:none; }
+  .link { white-space:nowrap; }
+  .ttl h2 { margin:0 !important; font-size:18px; font-weight:700; letter-spacing:-.01em; }
+  .none { color:var(--mut); padding:8px 0; max-width:380px; font-size:13px; line-height:1.6; }
+  #outwrap .grid2 { gap:12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="brand"><a href="https://creatobias.de" target="_blank" rel="noopener noreferrer" title="creatobias.de">/*__LOGO__*/</a><h1>12shades</h1></div>
+    <div class="barr"><span class="credit">by <a href="https://creatobias.de" target="_blank" rel="noopener noreferrer">creatobias</a> · based on <a href="https://www.tints.dev" target="_blank" rel="noopener noreferrer">tints.dev</a> by Simeon Griggs (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC 4.0</a>)</span>
+    <div class="seg" id="theme"><button data-v="auto">Auto</button><button data-v="light">Hell</button><button data-v="dark">Dunkel</button></div></div>
+  </header>
+  <div class="body">
+  <aside class="side box">
+    <div class="list" id="list"></div>
+    <div class="foot"><button class="btn" id="add">+ Neue Palette</button><button class="btn" id="all">Alle</button><button class="btn" id="clear" title="Auswahl aufheben" disabled>Aufheben</button><span class="sep"></span><button class="btn" id="rescan" title="Paletten in der Datei neu einlesen">↻</button></div>
+  </aside>
+    <div class="col settings box">
+      <div class="ttl"><h2 id="formtitle">Nichts ausgewählt</h2><span class="acts"><button class="link" id="reset" hidden>Zurücksetzen</button></span></div>
+      <div id="editor">
+        <div class="grp">
+          <div><label for="stop">Basisfarbe Shade</label><select id="stop"></select></div>
+          <div><label>Modus</label><div class="seg v" id="mode"><button data-v="linear">Linear</button><button data-v="perceived">Wahrgenommen</button></div></div>
+        </div>
+        <div class="grp">
+          <div><label for="h">Farbton-Shift <span class="val" id="hv"></span></label><input id="h" type="range" min="-20" max="20" step="1"></div>
+          <div><label for="s">Sättigung an den Rändern <span class="val" id="sv"></span></label><input id="s" type="range" min="-20" max="20" step="1"></div>
+          <div><label for="lmin">Min. Helligkeit (1000) <span class="val" id="lminv"></span></label><input id="lmin" type="range" min="0" max="50" step="1"></div>
+          <div><label for="lmax">Max. Helligkeit (0) <span class="val" id="lmaxv"></span></label><input id="lmax" type="range" min="50" max="100" step="1"></div>
+        </div>
+        <div class="grp" id="ends-wrap"><label class="chk"><input id="ends" type="checkbox"> Shades 0 und 1000</label><p class="hint" id="shared"></p></div>
+        <div class="grp" id="outwrap">
+          <h2>Ausgabe für neue Paletten</h2>
+          <div class="grid2"><div><label class="chk" style="margin-bottom:8px"><input id="outvars" type="checkbox" checked> Variablen in Sammlung</label>
+          <input id="coll" type="text" value="Colors" spellcheck="false"></div>
+          <div><label class="chk"><input id="outstyles" type="checkbox" checked> Farbstile anlegen</label></div></div>
+        </div>
+      </div>
+      <footer>
+        <div class="err" id="err"></div>
+        <button class="btn primary" id="go">Anwenden</button>
+        <p class="hint" id="gohint"></p>
+      </footer>
+    </div>
+    <div class="col palettes box">
+      <h2 id="paltitle">Paletten</h2>
+      <div class="rows" id="rows"></div>
+      <div class="none" id="none">Wähle links eine Palette aus oder lege mit „+ Neue Palette“ eine an. Mehrere Paletten wählst du mit Cmd/Strg oder Shift.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/*__CORE__*/
+
+const $ = id => document.getElementById(id);
+const post = m => parent.postMessage({ pluginMessage: m }, '*');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const SHOWN = STOPS.filter(s => s !== 0 && s !== 1000);
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
+const MODELABEL = { linear: 'Linear', perceived: 'Wahrgenommen' };
+
+let palettes = [];            // bestehende aus der Datei
+let drafts = [];              // neue, noch nicht angelegte: {key}
+let cfgs = {};                // Einstellungen je Schlüssel
+let sel = [];                 // ausgewählte Schlüssel
+let draftN = 0;
+const origs = {};
+const form = { stop: 500, mode: 'linear', h: 0, s: 0, lMin: 0, lMax: 100, ends: false };
+
+const norm = h => '#' + String(h).replace('#', '').toUpperCase();
+const validHex = h => /^#[0-9A-F]{6}$/.test(norm(h));
+const pal = key => palettes.find(p => p.key === key);
+const isDraft = key => key.indexOf('draft:') === 0;
+
+function derive(p) {
+  const st = p.settings;
+  if (st) {
+    try {
+      const sw = createSwatches({ value: st.hex, valueStop: st.stop, h: st.h, s: st.s, lMin: st.lMin, lMax: st.lMax, colorMode: st.mode });
+      if (sw.every(x => p.stops[x.stop] === undefined || p.stops[x.stop].toUpperCase() === x.hex.toUpperCase())) return Object.assign({}, st);
+    } catch (e) {}
+  }
+  const have = Object.keys(p.stops).map(Number);
+  const stop = p.stops[500] !== undefined ? 500 : have.reduce((a, b) => (Math.abs(b - 500) < Math.abs(a - 500) ? b : a));
+  return { hex: p.stops[stop], stop, mode: 'linear', h: 0, s: 0, lMin: 0, lMax: 100 };
+}
+const hasEnds = p => p.stops[0] !== undefined || p.stops[1000] !== undefined;
+
+function cfg(key) {
+  if (!cfgs[key]) {
+    const p = pal(key);
+    cfgs[key] = p ? Object.assign({ name: p.name, ends: hasEnds(p) }, derive(p)) : null;
+    if (cfgs[key]) origs[key] = JSON.stringify(cfgs[key]);
+  }
+  return cfgs[key];
+}
+function swatches(c) {
+  return createSwatches({ value: c.hex, valueStop: c.stop, h: c.h, s: c.s, lMin: c.lMin, lMax: c.lMax, colorMode: c.mode })
+    .filter(x => (x.stop !== 0 && x.stop !== 1000) || c.ends);
+}
+const safeSwatches = c => { try { return validHex(c.hex) ? swatches(c) : []; } catch (e) { return []; } };
+const strip = (arr, base) => `<span class="strip">${arr.map(x => `<i${x.stop === base ? ' class="base"' : ''} style="background:${x.hex}"></i>`).join('')}</span>`;
+const selKeys = () => sel.filter(k => cfg(k));
+const fields = ['stop', 'mode', 'h', 's', 'lMin', 'lMax', 'ends'];
+
+function addDraft() {
+  draftN++;
+  const key = 'draft:' + draftN;
+  const taken = new Set(allNames());
+  let n = draftN; while (taken.has('palette-' + n)) n++;
+  cfgs[key] = { name: 'palette-' + n, hex: COLORS[(draftN - 1) % COLORS.length], stop: 500, mode: 'linear', h: 0, s: 0, lMin: 0, lMax: 100, ends: false };
+  origs[key] = JSON.stringify(cfgs[key]);
+  drafts.push({ key });
+  return key;
+}
+const allNames = () => palettes.map(p => (cfgs[p.key] ? cfgs[p.key].name : p.name)).concat(drafts.map(d => cfgs[d.key].name));
+
+function loadForm() {
+  const k = selKeys()[0];
+  if (!k) return;
+  const c = cfg(k);
+  fields.forEach(f => { form[f] = c[f]; });
+}
+
+function renderList() {
+  const rows = palettes.map(p => {
+    const c = cfg(p.key);
+    const stops = Object.keys(p.stops).map(Number).sort((a, b) => a - b);
+    const tags = [p.variables ? 'Variablen' : '', p.styles ? 'Stile' : ''].filter(Boolean).join(' · ');
+    return `<div class="item" data-k="${encodeURIComponent(p.key)}" aria-selected="${sel.includes(p.key)}"><div class="meta"><span class="n">${esc(c.name)}</span><span class="tag">${tags}</span></div>${strip(stops.map(s => ({ stop: s, hex: p.stops[s] })), c.stop)}</div>`;
+  }).concat(drafts.map(d => {
+    const c = cfgs[d.key];
+    return `<div class="item" data-k="${encodeURIComponent(d.key)}" aria-selected="${sel.includes(d.key)}"><div class="meta"><span class="n">${esc(c.name)}</span><span class="tag">neu <button class="x" data-del="${encodeURIComponent(d.key)}" title="Entwurf entfernen">×</button></span></div>${strip(safeSwatches(c), c.stop)}</div>`;
+  }));
+  $('list').innerHTML = rows.length ? rows.join('') : '<div class="empty">Keine Paletten gefunden. Gesucht wird nach Variablen und Farbstilen mit Namen wie <b>brand/500</b>. Mit „+ Neue Palette“ legst du welche an.</div>';
+}
+
+function rowHtml(key) {
+  const c = cfg(key);
+  const sw = safeSwatches(c);
+  const tag = isDraft(key) ? 'neu' : '';
+  return `<div class="prow" data-k="${encodeURIComponent(key)}"><div class="head"><input type="color" class="pk" value="${validHex(c.hex) ? norm(c.hex).toLowerCase() : '#000000'}"><input type="text" class="nm" spellcheck="false" value="${esc(c.name)}"><input type="text" class="hx" maxlength="7" spellcheck="false" value="${esc(c.hex.replace('#', ''))}"><span class="tag">${tag}</span></div><div class="preview">${tiles(sw, c.stop)}</div></div>`;
+}
+const tiles = (sw, base) => sw.map(x => `<div${x.stop === base ? ' class="base"' : ''} data-hex="${x.hex}"><i style="background:${x.hex}"></i><span class="st">${x.stop}</span></div>`).join('');
+
+function renderRows() {
+  $('rows').innerHTML = selKeys().map(rowHtml).join('');
+}
+function updateRow(key) {
+  const row = [...document.querySelectorAll('.prow')].find(r => decodeURIComponent(r.dataset.k) === key);
+  if (row) row.querySelector('.preview').innerHTML = tiles(safeSwatches(cfg(key)), cfg(key).stop);
+}
+
+function renderForm() {
+  const keys = selKeys(), n = keys.length;
+  $('clear').disabled = !n; $('reset').hidden = !dirtyKeys().length;
+  $('editor').hidden = !n; $('none').hidden = n > 0; $('paltitle').hidden = !n;
+  $('formtitle').textContent = n === 0 ? 'Nichts ausgewählt' : n === 1 ? 'Palette bearbeiten' : n + ' Paletten bearbeiten';
+  $('shared').textContent = n > 1 ? 'Diese Einstellungen gelten für alle ausgewählten Paletten. Name und Farbe legst du pro Palette fest.' : '';
+  $('stop').innerHTML = SHOWN.map(s => `<option value="${s}"${s === +form.stop ? ' selected' : ''}>${s}</option>`).join('');
+  [...$('mode').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.v === form.mode));
+  [['h', 'hv', 'h'], ['s', 'sv', 's'], ['lmin', 'lminv', 'lMin'], ['lmax', 'lmaxv', 'lMax']].forEach(([id, v, k]) => { $(id).value = form[k]; $(v).textContent = form[k]; });
+  $('ends').checked = form.ends;
+  $('outwrap').hidden = !keys.some(isDraft);
+  renderRows(); renderGo();
+}
+
+function problems() {
+  const keys = selKeys();
+  const names = keys.map(k => cfg(k).name.trim());
+  const others = palettes.filter(p => !keys.includes(p.key)).map(p => cfg(p.key).name.trim())
+    .concat(drafts.filter(d => !keys.includes(d.key)).map(d => cfgs[d.key].name.trim()));
+  if (names.some(n => !n)) return 'Jede Palette braucht einen Namen.';
+  if (names.some(n => /\/\s*$/.test(n))) return 'Der Name darf nicht mit „/“ enden.';
+  const dup = names.find((n, i) => names.indexOf(n) !== i || others.includes(n));
+  if (dup) return 'Der Name „' + dup + '“ ist doppelt vergeben.';
+  if (keys.some(k => !validHex(cfg(k).hex))) return 'Ungültiger Hex-Wert.';
+  if (keys.some(isDraft) && !$('outvars').checked && !$('outstyles').checked) return 'Wähle Variablen und/oder Farbstile als Ausgabe.';
+  if (keys.some(isDraft) && $('outvars').checked && !$('coll').value.trim()) return 'Die Variablen-Sammlung braucht einen Namen.';
+  return '';
+}
+function renderGo() {
+  $('reset').hidden = !dirtyKeys().length;
+  const keys = selKeys(), nNew = keys.filter(isDraft).length, nUp = keys.length - nNew;
+  const parts = [];
+  if (nNew) parts.push(nNew + (nNew === 1 ? ' Palette anlegen' : ' Paletten anlegen'));
+  if (nUp) parts.push(nUp + (nUp === 1 ? ' aktualisieren' : ' aktualisieren'));
+  $('go').textContent = parts.length ? parts.join(' + ') : 'Anwenden';
+  const pr = keys.length ? problems() : '';
+  $('err').textContent = pr;
+  $('go').disabled = !keys.length || !!pr;
+}
+
+function select(keys) { sel = keys; loadForm(); renderList(); renderForm(); }
+let anchor = null;
+const order = () => palettes.map(p => p.key).concat(drafts.map(d => d.key));
+function pick(key, e) {
+  const keys = order();
+  if (e.shiftKey && anchor && keys.includes(anchor)) {
+    const a = keys.indexOf(anchor), b = keys.indexOf(key);
+    select(keys.slice(Math.min(a, b), Math.max(a, b) + 1));
+    return;
+  }
+  anchor = key;
+  if (e.metaKey || e.ctrlKey) select(sel.includes(key) ? sel.filter(k => k !== key) : sel.concat(key));
+  else select([key]);
+}
+
+$('list').addEventListener('click', e => {
+  const del = e.target.closest('[data-del]');
+  if (del) { const k = decodeURIComponent(del.dataset.del); drafts = drafts.filter(d => d.key !== k); delete cfgs[k]; select(sel.filter(x => x !== k)); return; }
+  const it = e.target.closest('.item'); if (it) pick(decodeURIComponent(it.dataset.k), e);
+});
+$('clear').addEventListener('click', () => select([]));
+const dirtyKeys = () => selKeys().filter(k => JSON.stringify(cfg(k)) !== origs[k]);
+$('reset').addEventListener('click', () => { dirtyKeys().forEach(k => { cfgs[k] = JSON.parse(origs[k]); }); loadForm(); renderList(); renderForm(); });
+$('list').addEventListener('click', e => { if (e.target === $('list')) select([]); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !/INPUT|SELECT/.test(document.activeElement.tagName)) select([]); });
+const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+let themePref = 'auto';
+function applyTheme(v) {
+  themePref = v || 'auto';
+  const dark = themePref === 'dark' || (themePref === 'auto' && mq && mq.matches);
+  document.documentElement.setAttribute('data-t', dark ? 'dark' : 'light');
+  [...$('theme').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.v === themePref));
+}
+if (mq && mq.addEventListener) mq.addEventListener('change', () => applyTheme(themePref));
+$('theme').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; applyTheme(b.dataset.v); post({ type: 'setTheme', value: b.dataset.v }); });
+$('add').addEventListener('click', () => { const k = addDraft(); anchor = k; select([k]); });
+$('all').addEventListener('click', () => {
+  const all = palettes.map(p => p.key).concat(drafts.map(d => d.key));
+  select(sel.length === all.length ? [] : all);
+});
+$('rescan').addEventListener('click', () => post({ type: 'scan' }));
+
+// gemeinsame Felder gelten für alle ausgewählten Paletten
+function shared(k, v) {
+  form[k] = v;
+  selKeys().forEach(key => { cfg(key)[k] = v; });
+  selKeys().forEach(updateRow);
+  renderList(); renderGo();
+}
+$('stop').addEventListener('change', e => shared('stop', +e.target.value));
+$('mode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; shared('mode', b.dataset.v); [...$('mode').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === form.mode)); });
+[['h', 'hv', 'h'], ['s', 'sv', 's'], ['lmin', 'lminv', 'lMin'], ['lmax', 'lmaxv', 'lMax']].forEach(([id, v, k]) => $(id).addEventListener('input', e => { $(v).textContent = e.target.value; shared(k, +e.target.value); }));
+$('ends').addEventListener('change', e => shared('ends', e.target.checked));
+['outvars', 'outstyles', 'coll'].forEach(id => $(id).addEventListener('input', renderGo));
+
+// Klick auf eine Kachel kopiert den Hex-Wert
+function copyText(t) {
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+  if (!ok && navigator.clipboard) navigator.clipboard.writeText(t).catch(() => {});
+  return ok;
+}
+$('rows').addEventListener('click', e => {
+  const t = e.target.closest('.preview div[data-hex]'); if (!t) return;
+  copyText(t.dataset.hex);
+  t.classList.add('copied');
+  clearTimeout(t._ct); t._ct = setTimeout(() => t.classList.remove('copied'), 1200);
+});
+
+// pro Palette: Name und Farbe
+$('rows').addEventListener('input', e => {
+  const row = e.target.closest('.prow'); if (!row) return;
+  const key = decodeURIComponent(row.dataset.k), c = cfg(key);
+  if (e.target.classList.contains('nm')) c.name = e.target.value;
+  else if (e.target.classList.contains('hx')) { c.hex = norm(e.target.value); if (validHex(c.hex)) row.querySelector('.pk').value = c.hex.toLowerCase(); }
+  else if (e.target.classList.contains('pk')) { c.hex = norm(e.target.value); row.querySelector('.hx').value = c.hex.replace('#', ''); }
+  updateRow(key); renderList(); renderGo();
+});
+
+$('go').addEventListener('click', () => {
+  try {
+    const keys = selKeys();
+    const items = keys.map(k => {
+      const c = cfg(k), draft = isDraft(k), p = pal(k);
+      const st = { hex: norm(c.hex), stop: +c.stop, mode: c.mode, h: +c.h, s: +c.s, lMin: +c.lMin, lMax: +c.lMax };
+      return {
+        name: c.name.trim(), oldName: draft ? null : p.name, swatches: swatches(c), settings: st,
+        collection: draft ? $('coll').value.trim() : (p.collection || $('coll').value.trim() || 'Colors'),
+        targets: draft ? { variables: $('outvars').checked, styles: $('outstyles').checked } : { variables: p.variables, styles: p.styles }
+      };
+    });
+    applied = { names: items.map(i => i.name), draftKeys: keys.filter(isDraft) };
+    $('go').disabled = true;
+    post({ type: 'apply', items });
+  } catch (e) { $('err').textContent = e.message; }
+});
+
+let applied = null;
+window.onmessage = ev => {
+  const m = ev.data && ev.data.pluginMessage;
+  if (!m) return;
+  if (m.type === 'palettes') {
+    palettes = m.palettes;
+    if (m.applied && applied) {
+      drafts = drafts.filter(d => !applied.draftKeys.includes(d.key));
+      applied.draftKeys.forEach(k => delete cfgs[k]);
+      cfgs = Object.fromEntries(Object.entries(cfgs).filter(([k]) => isDraft(k)));
+      sel = applied.names.filter(n => palettes.some(p => p.key === n)).concat(sel.filter(k => isDraft(k) && !applied.draftKeys.includes(k)));
+      applied = null;
+    } else {
+      cfgs = Object.fromEntries(Object.entries(cfgs).filter(([k]) => isDraft(k) || (pal(k) && sel.includes(k))));
+      sel = sel.filter(k => isDraft(k) || pal(k));
+    }
+    loadForm(); renderList(); renderForm();
+  } else if (m.type === 'theme') {
+    applyTheme(m.value);
+  } else if (m.type === 'error') {
+    $('err').textContent = m.message; $('go').disabled = false;
+  }
+};
+
+applyTheme('auto');
+renderList(); renderForm();
+post({ type: 'getTheme' });
+post({ type: 'scan' });
+</script>
+</body>
+</html>

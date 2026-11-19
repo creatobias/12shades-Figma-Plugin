@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --bg:#fff; --fg:#1c1917; --mut:#78716c; --line:#e7e5e4; --sec:#f5f5f4; --acc:#0d99ff; --accfg:#fff; --hov:rgba(0,0,0,.04); --seg:#fff; --canvas:#eeedec; --tt:#1c1917; --ttf:#fff; color-scheme:light; }
+  :root[data-t=dark] { --bg:#2c2c2c; --fg:#f5f5f5; --mut:#a3a3a3; --line:#484848; --sec:#363636; --hov:rgba(255,255,255,.06); --seg:#575757; --canvas:#1f1f1f; --tt:#f5f5f5; --ttf:#1c1917; color-scheme:dark; }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--canvas); font:12px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); }
+  h1 { font-size:15px; font-weight:700; margin:0; letter-spacing:-.01em; }
+  h2 { font-size:12px; font-weight:600; margin:28px 0 12px; }
+  label { display:block; color:var(--mut); margin:0 0 5px; }
+  .val { float:right; color:var(--fg); font-variant-numeric:tabular-nums; }
+  input[type=text], select { width:100%; height:32px; padding:0 10px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; font:inherit; }
+  input[type=text]:focus, select:focus { outline:2px solid var(--acc); outline-offset:-1px; }
+  input[type=range] { width:100%; margin:0; accent-color:var(--acc); }
+  .grid2 { display:grid; grid-template-columns:1fr; gap:12px; }
+  .btn { height:32px; padding:0 14px; border:1px solid var(--line); border-radius:8px; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+  .btn:hover { background:var(--sec); }
+  .btn.primary { width:100%; height:40px; background:var(--acc); color:var(--accfg); border-color:var(--acc); font-weight:600; font-size:13px; border-radius:10px; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .seg { display:flex; padding:3px; gap:2px; background:var(--sec); border-radius:8px; }
+  .seg button { flex:1; height:26px; border:0; border-radius:6px; background:transparent; color:var(--mut); font:inherit; cursor:pointer; }
+  .seg.v { flex-direction:column; }
+  .seg.v button { flex:none; height:28px; }
+  .seg button[aria-pressed=true] { background:var(--seg); color:var(--fg); font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.15); }
+  .app { display:grid; grid-template-rows:auto 1fr; height:100vh; background:var(--canvas); }
+  .bar { display:flex; justify-content:space-between; align-items:center; padding:14px 16px 12px; }
+  .barr { display:flex; align-items:center; gap:18px; }
+  .credit { color:var(--mut); font-size:11px; }
+  .credit a { color:inherit; text-decoration:underline; text-underline-offset:2px; }
+  .credit a:hover { color:var(--fg); }
+  .bar .seg { width:210px; }
+  .bar .seg button { height:24px; font-size:11px; }
+  .body { display:grid; grid-template-columns:200px 232px 1fr; gap:16px; padding:0 16px 16px; min-height:0; }
+  .box { background:var(--bg); border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+  .list { flex:1; overflow:auto; padding:12px; }
+  .item { display:grid; grid-template-columns:1fr; user-select:none; gap:2px 10px; align-items:center; padding:12px; border-radius:10px; cursor:pointer; }
+  .item:hover { background:var(--hov); }
+  .item[aria-selected=true] { background:var(--sec); box-shadow:0 0 0 1px var(--line); }
+  .item .n { font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .item .meta { display:flex; justify-content:space-between; align-items:center; gap:6px; }
+  .tag { color:var(--mut); font-size:11px; }
+  .strip { display:flex; height:10px; border-radius:3px; overflow:hidden; margin-top:6px; }
+  .strip i { flex:1; }
+  .strip i.base { flex:2.6; }
+  .x { width:20px; height:20px; border:0; background:transparent; color:var(--mut); cursor:pointer; border-radius:5px; font-size:14px; line-height:1; padding:0; }
+  .x:hover { background:var(--sec); color:var(--fg); }
+  .empty { padding:12px; color:var(--mut); }
+  .side .foot { padding:12px; border-top:1px solid var(--line); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .side .foot .btn { white-space:nowrap; padding:0 10px; }
+  .side .foot #add { flex:1 1 100%; }
+  .side .foot #all, .side .foot #clear { flex:1; padding:0 6px; }
+  .side .foot .sep { width:1px; height:18px; background:var(--line); margin:0 2px; }
+  .side .foot #rescan { width:32px; padding:0; color:var(--mut); }
+  .col { overflow:auto; min-height:0; padding:20px 20px 0; display:flex; flex-direction:column; scrollbar-width:none; }
+  .col::-webkit-scrollbar { display:none; }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .brand .logo { color:var(--fg); display:block; }
+  .col > h2:first-child { font-size:18px; font-weight:700; letter-spacing:-.01em; margin:0 0 20px; }
+  .rows { display:flex; flex-direction:column; gap:16px; padding-bottom:20px; }
+  .prow { border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .prow .head { display:flex; gap:12px; align-items:center; margin-bottom:16px; }
+  .prow .pk { appearance:none; -webkit-appearance:none; width:40px; height:40px; padding:0; border:0; border-radius:10px; background:none; cursor:pointer; flex:none; }
+  .prow .pk::-webkit-color-swatch-wrapper { padding:0; }
+  .prow .pk::-webkit-color-swatch { border:1px solid rgba(0,0,0,.1); border-radius:10px; }
+  .prow input.nm { flex:1; min-width:0; height:40px; font-size:16px; font-weight:600; letter-spacing:-.01em; border-color:transparent; padding:0 8px; margin-left:0; }
+  .prow input.nm:hover { border-color:var(--line); }
+  .prow input.hx { width:96px; flex:none; font-family:ui-monospace, Menlo, monospace; }
+  .prow .head .tag { width:46px; text-align:right; }
+  .preview { display:flex; gap:4px; }
+  .preview div { flex:1; min-width:0; text-align:center; font-size:10px; color:var(--mut); }
+  .preview div { position:relative; cursor:pointer; }
+  .preview div.copied[data-hex]:hover::after { content:'Kopiert ✓'; }
+  .preview div[data-hex]:hover::after { content:attr(data-hex); position:absolute; left:50%; top:-30px; transform:translateX(-50%); padding:5px 9px; border-radius:7px; background:var(--tt); color:var(--ttf); font:400 12px/1 ui-monospace, Menlo, monospace; white-space:nowrap; z-index:5; pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+  .preview div[data-hex]:hover::before { content:''; position:absolute; left:50%; top:-12px; width:8px; height:8px; margin-left:-4px; background:var(--tt); transform:rotate(45deg); border-radius:1px; z-index:4; pointer-events:none; }
+  .preview .base { flex:1.6; color:var(--fg); font-weight:700; }
+  .preview .base i { position:relative; }
+  .preview .base i::after { content:''; position:absolute; left:50%; bottom:7px; width:6px; height:6px; margin-left:-3px; border-radius:50%; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.3); }
+  .preview i { display:block; height:44px; border-radius:7px; border:1px solid rgba(0,0,0,.07); margin-bottom:6px; }
+  .chk { display:flex; align-items:center; gap:8px; margin:0; color:var(--fg); cursor:pointer; }
+  .chk input { margin:0; }
+  .err { color:#dc2626; min-height:18px; margin-bottom:6px; }
+  .hint { color:var(--mut); font-size:11px; margin:12px 0 0; }
+  .grp { display:grid; gap:16px; padding:16px 0; border-top:1px solid var(--line); }
+  .grp:first-child { border-top:0; padding-top:0; }
+    .grp .hint { margin:0; }
+  .hint:empty { display:none; }
+  .grp h2 { margin:0 !important; }
+  .grp label { margin-bottom:6px; }
+  .grp .chk { margin:0; font-size:13px; }
+  .grp .chk input { width:16px; height:16px; }
+  #outwrap .grid2 { gap:16px; }
+  .col.settings input[type=text], .col.settings select { height:38px; font-size:13px; }
+  .col.settings .seg { padding:4px; gap:4px; }
+  .col.settings .seg.v button { height:36px; font-size:13px; border-radius:7px; }
+  .col.settings input[type=range] { height:22px; }
+  .col footer { position:sticky; bottom:0; background:var(--bg); margin-top:auto; padding:12px 0 20px; }
+  .link { border:0; background:none; color:var(--acc); font:inherit; cursor:pointer; padding:0; }
+  .link:hover { text-decoration:underline; }
+  .ttl { display:flex; flex-direction:column; gap:4px; margin:0 0 16px; }
+  .acts { display:flex; gap:16px; }
+  .link[hidden] { display:none; }
+  .link { white-space:nowrap; }
+  .ttl h2 { margin:0 !important; font-size:18px; font-weight:700; letter-spacing:-.01em; }
+  .none { color:var(--mut); padding:8px 0; max-width:380px; font-size:13px; line-height:1.6; }
+  #outwrap .grid2 { gap:12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="brand"><a href="https://creatobias.de" target="_blank" rel="noopener noreferrer" title="creatobias.de"><svg class="logo" width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<path d="M15.3335 21.664C16.2547 21.916 14.4522 23.976 14.173 24.412C12.8889 26.056 11.4134 27.756 9.2599 28.144C7.74849 28.4 6.14934 27.904 4.86922 27.092C2.08567 25.32 0.406762 22.188 0.0598142 18.988C-0.247254 16.272 0.634072 13.556 1.9102 11.176C5.01279 5.44803 10.8511 1.13203 17.4152 0.188026C20.3303 -0.259974 24.6093 -0.143974 25.6422 3.17203C26.1965 5.05603 24.8646 6.96003 23.09 7.63603C21.5347 8.30003 19.792 7.98003 18.1489 8.16403C14.2408 8.55603 10.3885 10.564 8.2071 13.844C7.47731 14.948 6.95091 16.244 6.99876 17.576C7.05858 20.464 9.84214 22.788 12.7453 22.288C13.0723 22.24 13.3954 22.164 13.7064 22.068C14.2009 21.928 14.8629 21.6 15.3215 21.66H15.3335V21.664Z" fill="currentColor"/>
+<path d="M14.2249 19.0281C12.7812 19.7161 11.0266 19.7561 10.1771 18.4361C9.80626 17.8641 9.81025 17.1841 10.1133 16.5881C10.3606 16.1001 10.7315 15.7121 11.1741 15.3561C11.8361 14.8281 12.542 14.3961 13.2997 13.9721C15.2816 12.8641 17.3633 11.9761 19.5367 11.2281C22.0132 10.3761 25.5664 9.40405 28.1426 9.53205C28.9402 9.57205 29.6979 9.73605 30.3838 10.1281C31.8314 10.9561 32.3379 12.7641 31.4925 14.1481C31.0897 14.8001 30.4357 15.2521 29.7019 15.5441C28.9681 15.8281 28.1865 15.9161 27.3849 15.8601C24.6532 15.6761 22.1249 16.1561 19.5407 16.9401C17.6983 17.5001 15.9636 18.2001 14.2249 19.0281Z" fill="currentColor"/>
+<path d="M23.8915 23.7361C24.6572 25.5881 25.9413 27.2081 27.4687 28.5761C28.2024 29.1801 28.1586 29.7121 27.0579 29.6881C26.1925 29.6641 25.3112 29.6121 24.4418 29.6441C22.5914 29.6881 20.8607 30.3201 19.1339 30.8521C18.2765 31.1161 17.2397 31.4121 16.3584 31.6721C15.4651 31.9121 14.484 32.0041 13.5588 32.0001C13.4193 32.0001 13.196 31.9601 13.1401 31.8641C13.1042 31.8081 13.1242 31.7281 13.196 31.6321C13.3196 31.4841 13.5429 31.2961 13.7064 31.1401C13.8779 30.9761 14.0254 30.8361 14.1889 30.6841C15.2178 29.7161 16.2268 28.7241 17.1719 27.6641C17.6704 27.0961 18.3683 26.1921 18.8229 25.6401C19.106 25.3481 19.0103 25.1201 18.6115 25.1401C18.1848 25.1401 17.2118 25.1401 16.821 25.1361C16.3265 25.1361 16.5258 24.7801 16.7452 24.5561C16.9685 24.3081 17.1799 24.0761 17.3952 23.8321C18.0014 23.1481 18.5996 22.4361 19.1419 21.6961C19.6883 20.9361 20.103 20.1161 20.4499 19.2681C20.5935 18.9961 20.6414 18.5281 20.9524 18.3921C21.8657 18.2961 23.4528 22.8761 23.8835 23.7161L23.8915 23.7361Z" fill="currentColor"/>
+</svg></a><h1>12shades</h1></div>
+    <div class="barr"><span class="credit">by <a href="https://creatobias.de" target="_blank" rel="noopener noreferrer">creatobias</a> · based on <a href="https://www.tints.dev" target="_blank" rel="noopener noreferrer">tints.dev</a> by Simeon Griggs (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC 4.0</a>)</span>
+    <div class="seg" id="theme"><button data-v="auto">Auto</button><button data-v="light">Hell</button><button data-v="dark">Dunkel</button></div></div>
+  </header>
+  <div class="body">
+  <aside class="side box">
+    <div class="list" id="list"></div>
+    <div class="foot"><button class="btn" id="add">+ Neue Palette</button><button class="btn" id="all">Alle</button><button class="btn" id="clear" title="Auswahl aufheben" disabled>Aufheben</button><span class="sep"></span><button class="btn" id="rescan" title="Paletten in der Datei neu einlesen">↻</button></div>
+  </aside>
+    <div class="col settings box">
+      <div class="ttl"><h2 id="formtitle">Nichts ausgewählt</h2><span class="acts"><button class="link" id="reset" hidden>Zurücksetzen</button></span></div>
+      <div id="editor">
+        <div class="grp">
+          <div><label for="stop">Basisfarbe Shade</label><select id="stop"></select></div>
+          <div><label>Modus</label><div class="seg v" id="mode"><button data-v="linear">Linear</button><button data-v="perceived">Wahrgenommen</button></div></div>
+        </div>
+        <div class="grp">
+          <div><label for="h">Farbton-Shift <span class="val" id="hv"></span></label><input id="h" type="range" min="-20" max="20" step="1"></div>
+          <div><label for="s">Sättigung an den Rändern <span class="val" id="sv"></span></label><input id="s" type="range" min="-20" max="20" step="1"></div>
+          <div><label for="lmin">Min. Helligkeit (1000) <span class="val" id="lminv"></span></label><input id="lmin" type="range" min="0" max="50" step="1"></div>
+          <div><label for="lmax">Max. Helligkeit (0) <span class="val" id="lmaxv"></span></label><input id="lmax" type="range" min="50" max="100" step="1"></div>
+        </div>
+        <div class="grp" id="ends-wrap"><label class="chk"><input id="ends" type="checkbox"> Shades 0 und 1000</label><p class="hint" id="shared"></p></div>
+        <div class="grp" id="outwrap">
+          <h2>Ausgabe für neue Paletten</h2>
+          <div class="grid2"><div><label class="chk" style="margin-bottom:8px"><input id="outvars" type="checkbox" checked> Variablen in Sammlung</label>
+          <input id="coll" type="text" value="Colors" spellcheck="false"></div>
+          <div><label class="chk"><input id="outstyles" type="checkbox" checked> Farbstile anlegen</label></div></div>
+        </div>
+      </div>
+      <footer>
+        <div class="err" id="err"></div>
+        <button class="btn primary" id="go">Anwenden</button>
+        <p class="hint" id="gohint"></p>
+      </footer>
+    </div>
+    <div class="col palettes box">
+      <h2 id="paltitle">Paletten</h2>
+      <div class="rows" id="rows"></div>
+      <div class="none" id="none">Wähle links eine Palette aus oder lege mit „+ Neue Palette“ eine an. Mehrere Paletten wählst du mit Cmd/Strg oder Shift.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Palettenlogik nachgebaut nach tints.dev von Simeon Griggs (CC BY-NC 4.0, https://github.com/SimeonGriggs/tints.dev), erweitert um Shade 25. */
+/* ---------- 12shades-Core: Palette aus einer Basisfarbe (inkl. Shade 25) ---------- */
+const STOPS = [0, 25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950, 1000];
+// Position in der Originalreihe (0,50,100,...,1000). 25 liegt "dazwischen" (0.5),
+// damit alle bestehenden Stops exakt wie bei tints.dev berechnet werden.
+const STOP_POS = { 0: 0, 25: 0.5, 50: 1, 100: 2, 200: 3, 300: 4, 400: 5, 500: 6, 600: 7, 700: 8, 800: 9, 900: 10, 950: 11, 1000: 12 };
+
+const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
+
+/* --- HEX / RGB / HSL --- */
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+}
+function rgbToHex(rgb) {
+  return '#' + rgb.map(v => Math.round(clamp(v, 0, 1) * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function rgbToHsl([r, g, b]) {
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+  }
+  return [h, s, l];
+}
+function hslToRgb([h, s, l]) {
+  h = ((h % 360) + 360) % 360;
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  return [r + m, g + m, b + m];
+}
+
+/* --- HSLuv (perceptual) ---
+   Umrechnung nach der HSLuv-Referenzimplementierung von Alexei Boronine (MIT-Lizenz, https://github.com/hsluv/hsluv).
+   Copyright (c) Alexei Boronine. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, subject to the MIT License terms. */
+const M = [[3.240969941904521, -1.537383177570093, -0.498610760293], [-0.96924363628087, 1.87596750150772, 0.041555057407175], [0.055630079696993, -0.20397695888897, 1.056971514242878]];
+const MI = [[0.41239079926595, 0.35758433938387, 0.18048078840183], [0.21263900587151, 0.71516867876775, 0.072192315360733], [0.019330818715591, 0.11919477979462, 0.95053215224966]];
+const REF_U = 0.19783000664283, REF_V = 0.46831999493879, KAPPA = 903.2962962, EPS = 0.0088564516;
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const toLin = c => (c > 0.04045 ? Math.pow((c + 0.055) / 1.055, 2.4) : c / 12.92);
+const fromLin = c => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
+
+function getBounds(L) {
+  const res = [], sub1 = Math.pow(L + 16, 3) / 1560896, sub2 = sub1 > EPS ? sub1 : L / KAPPA;
+  for (let c = 0; c < 3; c++) {
+    const [m1, m2, m3] = M[c];
+    for (let t = 0; t < 2; t++) {
+      const top1 = (284517 * m1 - 94839 * m3) * sub2;
+      const top2 = (838422 * m3 + 769860 * m2 + 731718 * m1) * L * sub2 - 769860 * t * L;
+      const bottom = (632260 * m3 - 126452 * m2) * sub2 + 126452 * t;
+      res.push([top1 / bottom, top2 / bottom]);
+    }
+  }
+  return res;
+}
+function maxChroma(L, H) {
+  const hr = (H / 360) * Math.PI * 2;
+  let min = Infinity;
+  for (const [slope, icpt] of getBounds(L)) {
+    const len = icpt / (Math.sin(hr) - slope * Math.cos(hr));
+    if (len >= 0) min = Math.min(min, len);
+  }
+  return min;
+}
+function hexToHsluv(hex) {
+  const xyz = MI.map(r => dot(r, hexToRgb(hex).map(toLin)));
+  const [X, Y, Z] = xyz, div = X + 15 * Y + 3 * Z;
+  const L = Y <= EPS ? Y * KAPPA : 116 * Math.cbrt(Y) - 16;
+  if (L === 0) return [0, 0, 0];
+  const U = 13 * L * (4 * X / div - REF_U), V = 13 * L * (9 * Y / div - REF_V);
+  const C = Math.hypot(U, V);
+  let H = C < 1e-8 ? 0 : (Math.atan2(V, U) * 180) / Math.PI; if (H < 0) H += 360;
+  if (L > 99.9999999) return [H, 0, 100];
+  if (L < 1e-8) return [H, 0, 0];
+  return [H, (C / maxChroma(L, H)) * 100, L];
+}
+function hsluvToHex([H, S, L]) {
+  H = ((H % 360) + 360) % 360;
+  let C;
+  if (L > 99.9999999) { L = 100; C = 0; } else if (L < 1e-8) { L = 0; C = 0; } else C = (maxChroma(L, H) / 100) * S;
+  const hr = (H / 180) * Math.PI, U = Math.cos(hr) * C, V = Math.sin(hr) * C;
+  if (L === 0) return '#000000';
+  const vu = U / (13 * L) + REF_U, vv = V / (13 * L) + REF_V;
+  const Y = L <= 8 ? L / KAPPA : Math.pow((L + 16) / 116, 3);
+  const X = 0 - (9 * Y * vu) / ((vu - 4) * vv - vu * vv);
+  const Z = (9 * Y - 15 * vv * Y - vv * X) / (3 * vv);
+  return rgbToHex(M.map(r => fromLin(dot(r, [X, Y, Z]))));
+}
+
+/* --- Palette --- */
+function createSwatches({ value, valueStop = 500, h = 0, s = 0, lMin = 0, lMax = 100, colorMode = 'perceived' }) {
+  const hex = '#' + value.replace('#', '').toUpperCase();
+  if (!/^#[0-9A-F]{6}$/.test(hex)) throw new Error('Ungültiger Hex-Wert');
+  if (!(valueStop in STOP_POS)) throw new Error('Ungültige Shade');
+  const vPos = STOP_POS[valueStop];
+  const linear = colorMode === 'linear';
+  const [bh, bs, bl] = rgbToHsl(hexToRgb(hex));
+  const [uh, us, ul] = hexToHsluv(hex);
+  const baseL = linear ? bl * 100 : ul;
+
+  return STOPS.map(stop => {
+    if (stop === valueStop) return { stop, hex };
+    const diff = Math.abs(STOP_POS[stop] - vPos);
+    const hT = h ? diff * h : 0;
+    const sT = s ? Math.min(Math.round((diff + 1) * s * (1 + diff / 10)), 100) : 0;
+    // Lightness: Anker 0 -> lMax, valueStop -> Basis, 1000 -> lMin, dazwischen linear
+    const [a, b] = stop < valueStop ? [{ x: 0, y: lMax }, { x: valueStop, y: baseL }] : [{ x: valueStop, y: baseL }, { x: 1000, y: lMin }];
+    const lT = clamp(Math.round(a.y + (b.y - a.y) * ((stop - a.x) / (b.x - a.x))), 0, 100);
+    if (linear) return { stop, hex: rgbToHex(hslToRgb([(isNaN(bh) ? 0 : bh) + hT, clamp(bs * 100 + sT, 0, 100) / 100, lT / 100])) };
+    return { stop, hex: hsluvToHex([(isNaN(uh) ? 0 : uh) + hT, clamp(us + sT, 0, 100), lT]) };
+  });
+}
+
+
+const $ = id => document.getElementById(id);
+const post = m => parent.postMessage({ pluginMessage: m }, '*');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const SHOWN = STOPS.filter(s => s !== 0 && s !== 1000);
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
+const MODELABEL = { linear: 'Linear', perceived: 'Wahrgenommen' };
+
+let palettes = [];            // bestehende aus der Datei
+let drafts = [];              // neue, noch nicht angelegte: {key}
+let cfgs = {};                // Einstellungen je Schlüssel
+let sel = [];                 // ausgewählte Schlüssel
+let draftN = 0;
+const origs = {};
+const form = { stop: 500, mode: 'linear', h: 0, s: 0, lMin: 0, lMax: 100, ends: false };
+
+const norm = h => '#' + String(h).replace('#', '').toUpperCase();
+const validHex = h => /^#[0-9A-F]{6}$/.test(norm(h));
+const pal = key => palettes.find(p => p.key === key);
+const isDraft = key => key.indexOf('draft:') === 0;
+
+function derive(p) {
+  const st = p.settings;
+  if (st) {
+    try {
+      const sw = createSwatches({ value: st.hex, valueStop: st.stop, h: st.h, s: st.s, lMin: st.lMin, lMax: st.lMax, colorMode: st.mode });
+      if (sw.every(x => p.stops[x.stop] === undefined || p.stops[x.stop].toUpperCase() === x.hex.toUpperCase())) return Object.assign({}, st);
+    } catch (e) {}
+  }
+  const have = Object.keys(p.stops).map(Number);
+  const stop = p.stops[500] !== undefined ? 500 : have.reduce((a, b) => (Math.abs(b - 500) < Math.abs(a - 500) ? b : a));
+  return { hex: p.stops[stop], stop, mode: 'linear', h: 0, s: 0, lMin: 0, lMax: 100 };
+}
+const hasEnds = p => p.stops[0] !== undefined || p.stops[1000] !== undefined;
+
+function cfg(key) {
+  if (!cfgs[key]) {
+    const p = pal(key);
+    cfgs[key] = p ? Object.assign({ name: p.name, ends: hasEnds(p) }, derive(p)) : null;
+    if (cfgs[key]) origs[key] = JSON.stringify(cfgs[key]);
+  }
+  return cfgs[key];
+}
+function swatches(c) {
+  return createSwatches({ value: c.hex, valueStop: c.stop, h: c.h, s: c.s, lMin: c.lMin, lMax: c.lMax, colorMode: c.mode })
+    .filter(x => (x.stop !== 0 && x.stop !== 1000) || c.ends);
+}
+const safeSwatches = c => { try { return validHex(c.hex) ? swatches(c) : []; } catch (e) { return []; } };
+const strip = (arr, base) => `<span class="strip">${arr.map(x => `<i${x.stop === base ? ' class="base"' : ''} style="background:${x.hex}"></i>`).join('')}</span>`;
+const selKeys = () => sel.filter(k => cfg(k));
+const fields = ['stop', 'mode', 'h', 's', 'lMin', 'lMax', 'ends'];
+
+function addDraft() {
+  draftN++;
+  const key = 'draft:' + draftN;
+  const taken = new Set(allNames());
+  let n = draftN; while (taken.has('palette-' + n)) n++;
+  cfgs[key] = { name: 'palette-' + n, hex: COLORS[(draftN - 1) % COLORS.length], stop: 500, mode: 'linear', h: 0, s: 0, lMin: 0, lMax: 100, ends: false };
+  origs[key] = JSON.stringify(cfgs[key]);
+  drafts.push({ key });
+  return key;
+}
+const allNames = () => palettes.map(p => (cfgs[p.key] ? cfgs[p.key].name : p.name)).concat(drafts.map(d => cfgs[d.key].name));
+
+function loadForm() {
+  const k = selKeys()[0];
+  if (!k) return;
+  const c = cfg(k);
+  fields.forEach(f => { form[f] = c[f]; });
+}
+
+function renderList() {
+  const rows = palettes.map(p => {
+    const c = cfg(p.key);
+    const stops = Object.keys(p.stops).map(Number).sort((a, b) => a - b);
+    const tags = [p.variables ? 'Variablen' : '', p.styles ? 'Stile' : ''].filter(Boolean).join(' · ');
+    return `<div class="item" data-k="${encodeURIComponent(p.key)}" aria-selected="${sel.includes(p.key)}"><div class="meta"><span class="n">${esc(c.name)}</span><span class="tag">${tags}</span></div>${strip(stops.map(s => ({ stop: s, hex: p.stops[s] })), c.stop)}</div>`;
+  }).concat(drafts.map(d => {
+    const c = cfgs[d.key];
+    return `<div class="item" data-k="${encodeURIComponent(d.key)}" aria-selected="${sel.includes(d.key)}"><div class="meta"><span class="n">${esc(c.name)}</span><span class="tag">neu <button class="x" data-del="${encodeURIComponent(d.key)}" title="Entwurf entfernen">×</button></span></div>${strip(safeSwatches(c), c.stop)}</div>`;
+  }));
+  $('list').innerHTML = rows.length ? rows.join('') : '<div class="empty">Keine Paletten gefunden. Gesucht wird nach Variablen und Farbstilen mit Namen wie <b>brand/500</b>. Mit „+ Neue Palette“ legst du welche an.</div>';
+}
+
+function rowHtml(key) {
+  const c = cfg(key);
+  const sw = safeSwatches(c);
+  const tag = isDraft(key) ? 'neu' : '';
+  return `<div class="prow" data-k="${encodeURIComponent(key)}"><div class="head"><input type="color" class="pk" value="${validHex(c.hex) ? norm(c.hex).toLowerCase() : '#000000'}"><input type="text" class="nm" spellcheck="false" value="${esc(c.name)}"><input type="text" class="hx" maxlength="7" spellcheck="false" value="${esc(c.hex.replace('#', ''))}"><span class="tag">${tag}</span></div><div class="preview">${tiles(sw, c.stop)}</div></div>`;
+}
+const tiles = (sw, base) => sw.map(x => `<div${x.stop === base ? ' class="base"' : ''} data-hex="${x.hex}"><i style="background:${x.hex}"></i><span class="st">${x.stop}</span></div>`).join('');
+
+function renderRows() {
+  $('rows').innerHTML = selKeys().map(rowHtml).join('');
+}
+function updateRow(key) {
+  const row = [...document.querySelectorAll('.prow')].find(r => decodeURIComponent(r.dataset.k) === key);
+  if (row) row.querySelector('.preview').innerHTML = tiles(safeSwatches(cfg(key)), cfg(key).stop);
+}
+
+function renderForm() {
+  const keys = selKeys(), n = keys.length;
+  $('clear').disabled = !n; $('reset').hidden = !dirtyKeys().length;
+  $('editor').hidden = !n; $('none').hidden = n > 0; $('paltitle').hidden = !n;
+  $('formtitle').textContent = n === 0 ? 'Nichts ausgewählt' : n === 1 ? 'Palette bearbeiten' : n + ' Paletten bearbeiten';
+  $('shared').textContent = n > 1 ? 'Diese Einstellungen gelten für alle ausgewählten Paletten. Name und Farbe legst du pro Palette fest.' : '';
+  $('stop').innerHTML = SHOWN.map(s => `<option value="${s}"${s === +form.stop ? ' selected' : ''}>${s}</option>`).join('');
+  [...$('mode').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.v === form.mode));
+  [['h', 'hv', 'h'], ['s', 'sv', 's'], ['lmin', 'lminv', 'lMin'], ['lmax', 'lmaxv', 'lMax']].forEach(([id, v, k]) => { $(id).value = form[k]; $(v).textContent = form[k]; });
+  $('ends').checked = form.ends;
+  $('outwrap').hidden = !keys.some(isDraft);
+  renderRows(); renderGo();
+}
+
+function problems() {
+  const keys = selKeys();
+  const names = keys.map(k => cfg(k).name.trim());
+  const others = palettes.filter(p => !keys.includes(p.key)).map(p => cfg(p.key).name.trim())
+    .concat(drafts.filter(d => !keys.includes(d.key)).map(d => cfgs[d.key].name.trim()));
+  if (names.some(n => !n)) return 'Jede Palette braucht einen Namen.';
+  if (names.some(n => /\/\s*$/.test(n))) return 'Der Name darf nicht mit „/“ enden.';
+  const dup = names.find((n, i) => names.indexOf(n) !== i || others.includes(n));
+  if (dup) return 'Der Name „' + dup + '“ ist doppelt vergeben.';
+  if (keys.some(k => !validHex(cfg(k).hex))) return 'Ungültiger Hex-Wert.';
+  if (keys.some(isDraft) && !$('outvars').checked && !$('outstyles').checked) return 'Wähle Variablen und/oder Farbstile als Ausgabe.';
+  if (keys.some(isDraft) && $('outvars').checked && !$('coll').value.trim()) return 'Die Variablen-Sammlung braucht einen Namen.';
+  return '';
+}
+function renderGo() {
+  $('reset').hidden = !dirtyKeys().length;
+  const keys = selKeys(), nNew = keys.filter(isDraft).length, nUp = keys.length - nNew;
+  const parts = [];
+  if (nNew) parts.push(nNew + (nNew === 1 ? ' Palette anlegen' : ' Paletten anlegen'));
+  if (nUp) parts.push(nUp + (nUp === 1 ? ' aktualisieren' : ' aktualisieren'));
+  $('go').textContent = parts.length ? parts.join(' + ') : 'Anwenden';
+  const pr = keys.length ? problems() : '';
+  $('err').textContent = pr;
+  $('go').disabled = !keys.length || !!pr;
+}
+
+function select(keys) { sel = keys; loadForm(); renderList(); renderForm(); }
+let anchor = null;
+const order = () => palettes.map(p => p.key).concat(drafts.map(d => d.key));
+function pick(key, e) {
+  const keys = order();
+  if (e.shiftKey && anchor && keys.includes(anchor)) {
+    const a = keys.indexOf(anchor), b = keys.indexOf(key);
+    select(keys.slice(Math.min(a, b), Math.max(a, b) + 1));
+    return;
+  }
+  anchor = key;
+  if (e.metaKey || e.ctrlKey) select(sel.includes(key) ? sel.filter(k => k !== key) : sel.concat(key));
+  else select([key]);
+}
+
+$('list').addEventListener('click', e => {
+  const del = e.target.closest('[data-del]');
+  if (del) { const k = decodeURIComponent(del.dataset.del); drafts = drafts.filter(d => d.key !== k); delete cfgs[k]; select(sel.filter(x => x !== k)); return; }
+  const it = e.target.closest('.item'); if (it) pick(decodeURIComponent(it.dataset.k), e);
+});
+$('clear').addEventListener('click', () => select([]));
+const dirtyKeys = () => selKeys().filter(k => JSON.stringify(cfg(k)) !== origs[k]);
+$('reset').addEventListener('click', () => { dirtyKeys().forEach(k => { cfgs[k] = JSON.parse(origs[k]); }); loadForm(); renderList(); renderForm(); });
+$('list').addEventListener('click', e => { if (e.target === $('list')) select([]); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !/INPUT|SELECT/.test(document.activeElement.tagName)) select([]); });
+const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+let themePref = 'auto';
+function applyTheme(v) {
+  themePref = v || 'auto';
+  const dark = themePref === 'dark' || (themePref === 'auto' && mq && mq.matches);
+  document.documentElement.setAttribute('data-t', dark ? 'dark' : 'light');
+  [...$('theme').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.v === themePref));
+}
+if (mq && mq.addEventListener) mq.addEventListener('change', () => applyTheme(themePref));
+$('theme').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; applyTheme(b.dataset.v); post({ type: 'setTheme', value: b.dataset.v }); });
+$('add').addEventListener('click', () => { const k = addDraft(); anchor = k; select([k]); });
+$('all').addEventListener('click', () => {
+  const all = palettes.map(p => p.key).concat(drafts.map(d => d.key));
+  select(sel.length === all.length ? [] : all);
+});
+$('rescan').addEventListener('click', () => post({ type: 'scan' }));
+
+// gemeinsame Felder gelten für alle ausgewählten Paletten
+function shared(k, v) {
+  form[k] = v;
+  selKeys().forEach(key => { cfg(key)[k] = v; });
+  selKeys().forEach(updateRow);
+  renderList(); renderGo();
+}
+$('stop').addEventListener('change', e => shared('stop', +e.target.value));
+$('mode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; shared('mode', b.dataset.v); [...$('mode').children].forEach(x => x.setAttribute('aria-pressed', x.dataset.v === form.mode)); });
+[['h', 'hv', 'h'], ['s', 'sv', 's'], ['lmin', 'lminv', 'lMin'], ['lmax', 'lmaxv', 'lMax']].forEach(([id, v, k]) => $(id).addEventListener('input', e => { $(v).textContent = e.target.value; shared(k, +e.target.value); }));
+$('ends').addEventListener('change', e => shared('ends', e.target.checked));
+['outvars', 'outstyles', 'coll'].forEach(id => $(id).addEventListener('input', renderGo));
+
+// Klick auf eine Kachel kopiert den Hex-Wert
+function copyText(t) {
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+  if (!ok && navigator.clipboard) navigator.clipboard.writeText(t).catch(() => {});
+  return ok;
+}
+$('rows').addEventListener('click', e => {
+  const t = e.target.closest('.preview div[data-hex]'); if (!t) return;
+  copyText(t.dataset.hex);
+  t.classList.add('copied');
+  clearTimeout(t._ct); t._ct = setTimeout(() => t.classList.remove('copied'), 1200);
+});
+
+// pro Palette: Name und Farbe
+$('rows').addEventListener('input', e => {
+  const row = e.target.closest('.prow'); if (!row) return;
+  const key = decodeURIComponent(row.dataset.k), c = cfg(key);
+  if (e.target.classList.contains('nm')) c.name = e.target.value;
+  else if (e.target.classList.contains('hx')) { c.hex = norm(e.target.value); if (validHex(c.hex)) row.querySelector('.pk').value = c.hex.toLowerCase(); }
+  else if (e.target.classList.contains('pk')) { c.hex = norm(e.target.value); row.querySelector('.hx').value = c.hex.replace('#', ''); }
+  updateRow(key); renderList(); renderGo();
+});
+
+$('go').addEventListener('click', () => {
+  try {
+    const keys = selKeys();
+    const items = keys.map(k => {
+      const c = cfg(k), draft = isDraft(k), p = pal(k);
+      const st = { hex: norm(c.hex), stop: +c.stop, mode: c.mode, h: +c.h, s: +c.s, lMin: +c.lMin, lMax: +c.lMax };
+      return {
+        name: c.name.trim(), oldName: draft ? null : p.name, swatches: swatches(c), settings: st,
+        collection: draft ? $('coll').value.trim() : (p.collection || $('coll').value.trim() || 'Colors'),
+        targets: draft ? { variables: $('outvars').checked, styles: $('outstyles').checked } : { variables: p.variables, styles: p.styles }
+      };
+    });
+    applied = { names: items.map(i => i.name), draftKeys: keys.filter(isDraft) };
+    $('go').disabled = true;
+    post({ type: 'apply', items });
+  } catch (e) { $('err').textContent = e.message; }
+});
+
+let applied = null;
+window.onmessage = ev => {
+  const m = ev.data && ev.data.pluginMessage;
+  if (!m) return;
+  if (m.type === 'palettes') {
+    palettes = m.palettes;
+    if (m.applied && applied) {
+      drafts = drafts.filter(d => !applied.draftKeys.includes(d.key));
+      applied.draftKeys.forEach(k => delete cfgs[k]);
+      cfgs = Object.fromEntries(Object.entries(cfgs).filter(([k]) => isDraft(k)));
+      sel = applied.names.filter(n => palettes.some(p => p.key === n)).concat(sel.filter(k => isDraft(k) && !applied.draftKeys.includes(k)));
+      applied = null;
+    } else {
+      cfgs = Object.fromEntries(Object.entries(cfgs).filter(([k]) => isDraft(k) || (pal(k) && sel.includes(k))));
+      sel = sel.filter(k => isDraft(k) || pal(k));
+    }
+    loadForm(); renderList(); renderForm();
+  } else if (m.type === 'theme') {
+    applyTheme(m.value);
+  } else if (m.type === 'error') {
+    $('err').textContent = m.message; $('go').disabled = false;
+  }
+};
+
+applyTheme('auto');
+renderList(); renderForm();
+post({ type: 'getTheme' });
+post({ type: 'scan' });
+</script>
+</body>
+</html>
