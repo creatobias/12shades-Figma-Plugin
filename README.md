@@ -1,37 +1,37 @@
-# 12shades – Figma plugin
+# 12shades – Figma-Plugin
 
-Generate colour palettes with 12 shades (25 … 950, optionally 0 and 1000) from a single base colour and write them straight into Figma as **variables** and/or **paint styles**. Existing palettes (names like `brand/500`) are detected and can be updated in place, so variable bindings and style usage stay intact.
+Erzeuge Farbpaletten mit 12 Shades (25 … 950, optional 0 und 1000) aus einer einzigen Basisfarbe und schreibe sie direkt als **Variablen** und/oder **Farbstile** in Figma. Bestehende Paletten (Namen wie `brand/500`) werden erkannt und lassen sich an Ort und Stelle aktualisieren, sodass Variablen-Bindings und Stil-Zuweisungen erhalten bleiben.
 
-Web version: <https://12shades.creatobias.de>
+Web-Version: <https://12shades.creatobias.de>
 
-## Features
+## Funktionen
 
-- Create several palettes at once, each with its own name and base colour
-- Update, rename or batch-edit existing palettes (hue shift, saturation, min/max lightness, mode)
-- Linear (HSL) and perceived (HSLuv) mode
-- Live preview, click a swatch to copy its hex value
-- Light/dark/auto theme
+- Mehrere Paletten auf einmal anlegen, jeweils mit eigenem Namen und eigener Basisfarbe
+- Bestehende Paletten aktualisieren, umbenennen oder gesammelt bearbeiten (Farbton, Sättigung, min./max. Helligkeit, Modus)
+- Modus „Linear“ (HSL) und „Wahrgenommen“ (HSLuv)
+- Live-Vorschau, Klick auf eine Kachel kopiert den Hex-Wert
+- Hell, Dunkel oder Auto (System)
 
-## Install as a development plugin
+## Als lokales Entwicklungs-Plugin installieren
 
-1. Download or clone this repository.
-2. In Figma Desktop: **Plugins → Development → Import plugin from manifest…** and choose `manifest.json`.
-3. Run it via **Plugins → Development → 12shades**.
+1. Repository herunterladen oder klonen.
+2. In Figma Desktop: **Plugins → Development → Import plugin from manifest…** und die `manifest.json` wählen.
+3. Starten über **Plugins → Development → 12shades**.
 
 ## Build
 
-`ui.html` is generated from `src/`:
+`ui.html` wird aus `src/` erzeugt:
 
 ```sh
 node build.js
 ```
 
-## Credits and licences
+## Credits und Lizenzen
 
 by [creatobias](https://creatobias.de) · based on [tints.dev](https://www.tints.dev) by Simeon Griggs ([CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)).
-The palette logic re-implements the approach of tints.dev and adds shade 25 as well as optional shades 0 and 1000. Because of the NonCommercial licence of tints.dev this plugin is free to use and must not be used commercially.
+Die Palettenlogik bildet den Ansatz von tints.dev nach und ergänzt Shade 25 sowie die optionalen Shades 0 und 1000. Wegen der NonCommercial-Lizenz von tints.dev ist dieses Plugin kostenlos und darf nicht kommerziell genutzt werden.
 
-The HSLuv conversion follows the HSLuv reference implementation by Alexei Boronine (<https://github.com/hsluv/hsluv>), MIT licence:
+Die HSLuv-Umrechnung folgt der HSLuv-Referenzimplementierung von Alexei Boronine (<https://github.com/hsluv/hsluv>), MIT-Lizenz:
 
 ```
 MIT License
